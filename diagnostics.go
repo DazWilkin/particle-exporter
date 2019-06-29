@@ -22,6 +22,8 @@ type Payload struct {
 	// Service Service `json:"service"`
 	Device PDevice `json:"device"`
 }
+type Service struct {
+}
 type PDevice struct {
 	System System `json:"system"`
 }

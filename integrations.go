@@ -16,11 +16,11 @@ type IntegrationResponse struct {
 	Integration Integration `json:"integration"`
 }
 type Integration struct {
-	ID                 string    `json:"id"`
-	DeviceID           string    `json:"deviceID,omitempty"`
-	Event              string    `json:"event"`
-	CreatedAt          time.Time `json:"created_at"`
-	Form               Form      `json:"form,omitempty"`
+	ID        string `json:"id"`
+	DeviceID  string `json:"deviceID,omitempty"`
+	Event     string `json:"event"`
+	CreatedAt string `json:"created_at"`
+	// Form               Form      `json:"form,omitempty"`
 	Logs               []Log     `json:"logs,omitempty"`
 	IntegrationType    string    `json:"integration_type"`
 	URL                string    `json:"url"`
@@ -36,11 +36,11 @@ type Form struct {
 	APIKey string `json:"api_key"`
 }
 type Log struct {
-	Event    Event     `json:"event"`
-	Type     string    `json:"type"`
-	Request  string    `json:"request"`
-	Response string    `json:"response"`
-	Time     time.Time `json:"time"`
+	Event    Event  `json:"event"`
+	Type     string `json:"type"`
+	Request  string `json:"request"`
+	Response string `json:"response"`
+	Time     int64  `json:"time"`
 }
 type Event struct {
 	Name        string    `json:"name"`
@@ -50,12 +50,12 @@ type Event struct {
 	CoreID      string    `json:"coreid"`
 }
 type IError struct {
-	Event    Event     `json:"event"`
-	Type     string    `json:"type"`
-	Request  string    `json:"request"`
-	Response string    `json:"response"`
-	Message  string    `json:"message"`
-	Time     time.Time `json:"time"`
+	Event    Event  `json:"event"`
+	Type     string `json:"type"`
+	Request  string `json:"request"`
+	Response string `json:"response"`
+	Message  string `json:"message"`
+	Time     int64  `json:"time"`
 }
 type Counter struct {
 	Date    string `json:"date"`

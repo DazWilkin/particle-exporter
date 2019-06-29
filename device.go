@@ -22,7 +22,7 @@ type Device struct {
 	CurrentBuildTarget string     `json:"current_build_target"`
 	SystemFirmware     string     `json:"system_firmware_version"`
 	PinnedBuildTarget  string     `json:"pinned_build_target"`
-	Variables          []Variable `json:"variables,omitempty"`
+	Variables          Variable   `json:"variables,omitempty"`
 	Functions          []Function `json:"functions,omitempty"`
 }
 type Variable map[string]string
