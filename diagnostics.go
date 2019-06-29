@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"time"
 )
 
 const (
@@ -14,9 +15,9 @@ type Response struct {
 	Diagnostics []Diagnostic `json:"diagnostics"`
 }
 type Diagnostic struct {
-	UpdatedAt string  `json:"update_at"`
-	Payload   Payload `json:"payload"`
-	ID        string  `json:"deviceID"`
+	UpdatedAt time.Time `json:"update_at"`
+	Payload   Payload   `json:"payload"`
+	ID        string    `json:"deviceID"`
 }
 type Payload struct {
 	// Service Service `json:"service"`

@@ -17,23 +17,12 @@ var (
 )
 
 func metricsHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "# Hello Freddie")
-	// Enumerate metrics
-	for _, metric := range metrics {
-		fmt.Fprintf(w, metric.expose())
-	}
-}
-func main() {
-	flag.Parse()
-
-	if *token == "" {
-		log.Fatal("Require Particle Access Token to connect to Particle service.")
-	}
+	fmt.Fprintf(w, "# Particle Exporter")
 
 	// Enumerate metrics
 	metrics = append(metrics, newFreddie())
 
-	// Devices
+	// Enumerate Devices|Diagnostics
 	devices, err := newDevices(*token)
 	if err != nil {
 		log.Fatal(err)
@@ -50,6 +39,31 @@ func main() {
 		for _, diag := range response.Diagnostics {
 			metrics = append(metrics, diag)
 		}
+	}
+
+	// Enumerate Integrations
+	integrations, err := newIntegrations(*token)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, integration := range integrations {
+		// Integration
+		detailed, err := newIntegration(*token, integration.ID)
+		if err != nil {
+			log.Fatal(err)
+		}
+		metrics = append(metrics, detailed)
+	}
+
+	for _, metric := range metrics {
+		fmt.Fprintf(w, metric.expose())
+	}
+}
+func main() {
+	flag.Parse()
+
+	if *token == "" {
+		log.Fatal("Require Particle Access Token to connect to Particle service.")
 	}
 
 	// Handle request for metrics

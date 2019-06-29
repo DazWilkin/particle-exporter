@@ -3,12 +3,15 @@ package main
 import (
 	"fmt"
 	"log"
+	"time"
 )
 
 type Device struct {
 	ID                 string     `json:"id"`
 	Name               string     `json:"string"`
-	LastHeard          string     `json:"last_heard"`
+	LastApp            string     `json:"last_app"`
+	LastIPAddress      string     `json:"last_ip_address"`
+	LastHeard          time.Time  `json:"last_heard"`
 	Connected          bool       `json:"connected"`
 	Status             string     `json:"status"`
 	SerialNumber       string     `json:"serial_number"`
