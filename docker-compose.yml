@@ -1,0 +1,27 @@
+version: "3"
+
+services:
+
+  prometheus:
+    image: prom/prometheus
+    volumes:
+    - "${PWD}/prometheus.yml:/etc/prometheus/prometheus.yml"
+    expose:
+    - "9090" # Default HTTP Endpoint
+    ports:
+    - 9090:9090
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - --fail
+      - "http://prometheus:9090/-/healthy"
+  
+  particle-exporter:
+    image: dazwilkin/particle-exporter@sha256:83b896c0795982706c0d6d05b54d966b2415673a06803ffab42696e54c20d2b2
+    command:
+    - --token=${TOKEN}
+    expose:
+    - "9999"
+    ports:
+    - 9999:9999
