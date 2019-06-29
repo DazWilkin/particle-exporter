@@ -3,8 +3,7 @@ FROM golang:1.12 as build
 WORKDIR /go/src/github.com/DazWilkin/particle-exporter
 COPY . .
 
-ENV GO111MODULES=on
-RUN go build -o /particle-exporter github.com/DazWilkin/particle-exporter
+RUN GO111MODULES=on go build -o /particle-exporter github.com/DazWilkin/particle-exporter
 
 # Now copy it into our base image.
 FROM gcr.io/distroless/base
