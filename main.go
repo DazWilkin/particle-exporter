@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sync"
 )
 
 var (
@@ -13,60 +14,115 @@ var (
 	token    = flag.String("token", "", "Particle Access Token")
 )
 var (
-	metrics []Metric
+	metrics chan Metric
 )
 
 func metricsHandler(w http.ResponseWriter, r *http.Request) {
+	log.Println("[handler] Entering")
+	var wgPut, wgGet sync.WaitGroup
+
 	fmt.Fprintf(w, "# Particle Exporter")
 
-	// Enumerate metrics
-	metrics = append(metrics, newFreddie())
-
-	// Enumerate Devices|Diagnostics
-	devices, err := newDevices(*token)
-	if err != nil {
-		log.Fatal(err)
-	}
-	for _, device := range devices {
-		// Device
-		metrics = append(metrics, device)
-
-		// Diagnostics
-		response, err := newDiagnostics(*token, device.ID)
+	// Accumulate Metrics
+	// Accumulate Devices|Diagnostics
+	wgPut.Add(1)
+	go func() {
+		log.Println("[handler:go] Entered: Devices|Diagnostics")
+		defer func() {
+			log.Println("[handler:go] Exited: Devices|Diagnostics")
+			wgPut.Done()
+		}()
+		log.Println("[handler] Getting Devices")
+		devices, err := newDevices(*token)
 		if err != nil {
 			log.Fatal(err)
 		}
-		for _, diag := range response.Diagnostics {
-			metrics = append(metrics, diag)
-		}
-	}
+		log.Println("[handler] Enumerating Devices")
+		for _, device := range devices {
+			// Device
+			log.Printf("[handler] Enqueuing Device: %s", device.ID)
+			metrics <- device
 
-	// Enumerate Integrations
-	integrations, err := newIntegrations(*token)
-	if err != nil {
-		log.Fatal(err)
-	}
-	for _, integration := range integrations {
-		// Integration
-		detailed, err := newIntegration(*token, integration.ID)
+			// Diagnostics
+			log.Println("[handler] Getting Device Diagnostics")
+			response, err := newDiagnostics(*token, device.ID)
+			if err != nil {
+				log.Fatal(err)
+			}
+			log.Println("[handler] Enumerating Diagnostics")
+			for _, diagnostic := range response.Diagnostics {
+				log.Println("[handler] Enqueuing Diagnostics")
+				metrics <- diagnostic
+			}
+		}
+	}()
+
+	// Accumulate Integrations
+	wgPut.Add(1)
+	go func() {
+		log.Println("[handler:go] Entered: Integrations")
+		defer func() {
+			log.Println("[handler:go] Exited: Integrations")
+			wgPut.Done()
+		}()
+		log.Println("[handler] Getting Integrations")
+		integrations, err := newIntegrations(*token)
 		if err != nil {
 			log.Fatal(err)
 		}
-		metrics = append(metrics, detailed)
-	}
+		log.Println("[handler] Enumerating Integrations")
+		for _, integration := range integrations {
+			// Integration
+			log.Printf("[handler] Getting Integration: %s", integration.ID)
+			detailed, err := newIntegration(*token, integration.ID)
+			if err != nil {
+				log.Fatal(err)
+			}
+			log.Println("[handler] Enqueuing Integration")
+			metrics <- detailed
+		}
+	}()
 
-	for _, metric := range metrics {
-		fmt.Fprintf(w, metric.expose())
-	}
+	// Consume Metrics
+	wgGet.Add(1)
+	go func() {
+		log.Println("[handler:go] Entered: Enumerate")
+		defer func() {
+			log.Println("[handler:go] Exited: Enumerate")
+			wgGet.Done()
+		}()
+		log.Println("[handler] Enumerating Metrics")
+		for metric := range metrics {
+			log.Println("[handler] Metric")
+			fmt.Fprintf(w, metric.expose())
+		}
+	}()
+
+	// Wait for Metric accumulation to complete
+	// Then close the channel
+	wgPut.Wait()
+	close(metrics)
+
+	// Wait for Metric consumption to complete
+	// Then page is rendered
+	wgGet.Wait()
 }
 func main() {
+	log.Println("[main] Entered")
 	flag.Parse()
 
 	if *token == "" {
 		log.Fatal("Require Particle Access Token to connect to Particle service.")
 	}
 
+	// Create Channel used to queue Metrics
+	metrics = make(chan Metric)
+
 	// Handle request for metrics
+	log.Println("[main] Registering handler")
 	http.HandleFunc(fmt.Sprintf("/%s", *path), metricsHandler)
+
+	// Serve
+	log.Printf("[main] Starting Server: %s", *endpoint)
 	log.Fatal(http.ListenAndServe(*endpoint, nil))
 }

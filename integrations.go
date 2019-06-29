@@ -8,15 +8,19 @@ import (
 )
 
 const (
-	integs = "https://api.particle.io/v1/integrations"
+	urlIntegrations = "https://api.particle.io/v1/integrations"
 )
 
 type Integrations []Integration
+type IntegrationResponse struct {
+	Integration Integration `json:"integration"`
+}
 type Integration struct {
 	ID                 string    `json:"id"`
 	DeviceID           string    `json:"deviceID,omitempty"`
 	Event              string    `json:"event"`
 	CreatedAt          time.Time `json:"created_at"`
+	Form               Form      `json:"form,omitempty"`
 	Logs               []Log     `json:"logs,omitempty"`
 	IntegrationType    string    `json:"integration_type"`
 	URL                string    `json:"url"`
@@ -25,7 +29,11 @@ type Integration struct {
 	NoDefaults         bool      `json:"noDefaults"`
 	RejectUnauthorized bool      `json:"rejectUnauthorized"`
 	Errors             []IError  `json:"errors,omitempty"`
-	Counters           []Counter `json:"counters"`
+	Counters           []Counter `json:"counters,omitempty"`
+}
+type Form struct {
+	Field1 string `json:"field1"`
+	APIKey string `json:"api_key"`
 }
 type Log struct {
 	Event    Event     `json:"event"`
@@ -41,29 +49,45 @@ type Event struct {
 	PublishedAt time.Time `json:"published_at"`
 	CoreID      string    `json:"coreid"`
 }
-type IError struct{}
+type IError struct {
+	Event    Event     `json:"event"`
+	Type     string    `json:"type"`
+	Request  string    `json:"request"`
+	Response string    `json:"response"`
+	Message  string    `json:"message"`
+	Time     time.Time `json:"time"`
+}
 type Counter struct {
 	Date    string `json:"date"`
 	Success string `json:"success"`
+	Error   string `json:"error"`
 }
 
-func newIntegrations(token string) (integrations Integrations, err error) {
-	log.Println("[integrations:new] Entered")
-	body, err := get(integs, token)
+func newIntegrations(token string) (Integrations, error) {
+	body, err := get(urlIntegrations, token)
 	if err != nil {
 		return nil, err
 	}
-	json.Unmarshal(body, &integrations)
-	return integrations, nil
+	log.Println(string(body))
+	ii := Integrations{}
+	json.Unmarshal(body, &ii)
+	log.Println(len(ii))
+	return ii, nil
 }
-func newIntegration(token, id string) (integration Integration, err error) {
-	log.Println("[integration:new] Entered")
-	body, err := get(fmt.Sprintf("%s/%s", integs, id), token)
+func newIntegration(token, id string) (Integration, error) {
+	body, err := get(fmt.Sprintf("%s/%s", urlIntegrations, id), token)
 	if err != nil {
 		return Integration{}, err
 	}
-	json.Unmarshal(body, &integration)
-	return integration, nil
+	log.Println(string(body))
+
+	ir := IntegrationResponse{}
+	ir.Integration.Logs = []Log{}
+	ir.Integration.Errors = []IError{}
+	ir.Integration.Counters = []Counter{}
+
+	json.Unmarshal(body, &ir)
+	return ir.Integration, nil
 }
 
 func (i Integration) expose() (result string) {

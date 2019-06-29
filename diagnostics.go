@@ -3,15 +3,14 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"time"
 )
 
 const (
-	diags = "https://api.particle.io/v1/diagnostics"
+	urlDiagnostics = "https://api.particle.io/v1/diagnostics"
 )
 
-type Response struct {
+type DiagnosticsResponse struct {
 	Diagnostics []Diagnostic `json:"diagnostics"`
 }
 type Diagnostic struct {
@@ -35,17 +34,20 @@ type Memory struct {
 	Total int64 `json:"total"`
 }
 
-func newDiagnostics(token, device string) (response Response, err error) {
-	log.Println("[diagnostics:new] Entered")
-	body, err := get(fmt.Sprintf("%s/%s", diags, device), token)
+func newDiagnostics(token, device string) (DiagnosticsResponse, error) {
+	body, err := get(fmt.Sprintf("%s/%s", urlDiagnostics, device), token)
 	if err != nil {
-		return Response{}, err
+		return DiagnosticsResponse{}, err
 	}
-	json.Unmarshal(body, &response)
-	return response, nil
+	dr := DiagnosticsResponse{}
+	dr.Diagnostics = []Diagnostic{}
+	err = json.Unmarshal(body, &dr)
+	if err != nil {
+		return DiagnosticsResponse{}, err
+	}
+	return dr, nil
 }
 func (d Diagnostic) expose() (result string) {
-	log.Println("[diagnostics:expose] Entered")
 	result += fmt.Sprintf("# HELP device system memory used.\n# TYPE device_system_memory_used gauge\ndevice_system_memory_used{core_id=\"%s\"} %d\n", d.ID, d.Payload.Device.System.Memory.Used)
 	result += fmt.Sprintf("# HELP device system memory total.\n# TYPE device_system_memory_total gauge\ndevice_system_memory_total{core_id=\"%s\"} %d\n", d.ID, d.Payload.Device.System.Memory.Total)
 	result += fmt.Sprintf("# HELP device uptime.\n#TYPE device_uptime gauge\ndevice_uptime{core_id=\"%s\"} %d\n", d.ID, d.Payload.Device.System.Uptime)
