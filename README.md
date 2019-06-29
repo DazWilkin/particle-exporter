@@ -8,6 +8,16 @@ This is a couple of hour's work! It is very rough. It works. It only enumerates 
 
 Feedback always welcome.
 
+## Docker Compose
+
+You can run everything using Docker Compose.
+```bash
+TOKEN=[[PARTICLE-TOKEN]]
+docker-compose up
+```
+
+**NB** This requires the prometheus.yml file to reference the exporter as `particle-exporter:9999` rather than `localhost:9999`
+
 ## Prometheus
 
 prometheus.yaml:
@@ -41,7 +51,7 @@ Either:
 docker run \
 --interactive --tty \
 --publish=9999:9999 \
-dazwilkin/particle-exporter@sha256:86adc971e8b428efa1e7739e4ef74da1525535a1a2bacbc64847f2f0876f7196 \
+dazwilkin/particle-exporter@sha256:83b896c0795982706c0d6d05b54d966b2415673a06803ffab42696e54c20d2b2 \
   --token=${TOKEN}
 ```
 Or:
@@ -101,4 +111,13 @@ curl \
 --header "Authorization: Bearer ${TOKEN}" \
 https://api.particle.io/v1/diagnostics/${DEVICE} \
 | jq '.diagnostics[].payload'
+```
+
+```bash
+curl \
+--silent \
+--request GET \
+--header "Authorization: Bearer ${TOKEN}" \
+https://api.particle.io/v1/integrations/${DEVICE} \
+| jq '.integrations[].logs'
 ```
