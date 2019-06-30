@@ -1,9 +1,23 @@
-package main
+package particle
 
 import (
 	"fmt"
 	"time"
 )
+
+const (
+	urlDevices = "https://api.particle.io/v1/devices"
+)
+
+type Devices []Device
+
+func (d Devices) expose() (result []string) {
+	result = make([]string, len(d))
+	for i, device := range d {
+		result[i] = device.Expose()
+	}
+	return result
+}
 
 type Device struct {
 	ID                 string     `json:"id"`
@@ -28,6 +42,6 @@ type Device struct {
 type Variable map[string]string
 type Function []string
 
-func (d Device) expose() string {
+func (d Device) Expose() string {
 	return fmt.Sprintf("# HELP particle device information.\n# TYPE particle_connected counter\nparticle_connected{core_id=\"%s\"} 1\n", d.ID)
 }

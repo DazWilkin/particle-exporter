@@ -1,7 +1,6 @@
-package main
+package particle
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 )
@@ -36,20 +35,7 @@ type Memory struct {
 	Total int64 `json:"total"`
 }
 
-func newDiagnostics(token, device string) (DiagnosticsResponse, error) {
-	body, err := get(fmt.Sprintf("%s/%s", urlDiagnostics, device), token)
-	if err != nil {
-		return DiagnosticsResponse{}, err
-	}
-	dr := DiagnosticsResponse{}
-	dr.Diagnostics = []Diagnostic{}
-	err = json.Unmarshal(body, &dr)
-	if err != nil {
-		return DiagnosticsResponse{}, err
-	}
-	return dr, nil
-}
-func (d Diagnostic) expose() (result string) {
+func (d Diagnostic) Expose() (result string) {
 	result += fmt.Sprintf("# HELP device system memory used.\n# TYPE device_system_memory_used gauge\ndevice_system_memory_used{core_id=\"%s\"} %d\n", d.ID, d.Payload.Device.System.Memory.Used)
 	result += fmt.Sprintf("# HELP device system memory total.\n# TYPE device_system_memory_total gauge\ndevice_system_memory_total{core_id=\"%s\"} %d\n", d.ID, d.Payload.Device.System.Memory.Total)
 	result += fmt.Sprintf("# HELP device uptime.\n#TYPE device_uptime gauge\ndevice_uptime{core_id=\"%s\"} %d\n", d.ID, d.Payload.Device.System.Uptime)

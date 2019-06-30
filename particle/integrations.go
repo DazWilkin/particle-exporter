@@ -1,7 +1,6 @@
-package main
+package particle
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -63,34 +62,7 @@ type Counter struct {
 	Error   string `json:"error"`
 }
 
-func newIntegrations(token string) (Integrations, error) {
-	body, err := get(urlIntegrations, token)
-	if err != nil {
-		return nil, err
-	}
-	log.Println(string(body))
-	ii := Integrations{}
-	json.Unmarshal(body, &ii)
-	log.Println(len(ii))
-	return ii, nil
-}
-func newIntegration(token, id string) (Integration, error) {
-	body, err := get(fmt.Sprintf("%s/%s", urlIntegrations, id), token)
-	if err != nil {
-		return Integration{}, err
-	}
-	log.Println(string(body))
-
-	ir := IntegrationResponse{}
-	ir.Integration.Logs = []Log{}
-	ir.Integration.Errors = []IError{}
-	ir.Integration.Counters = []Counter{}
-
-	json.Unmarshal(body, &ir)
-	return ir.Integration, nil
-}
-
-func (i Integration) expose() (result string) {
+func (i Integration) Expose() (result string) {
 	log.Println("[integration.expose] Entered")
 	result += fmt.Sprintf("# HELP particle integration logs information.\n# TYPE particle_integration_logs_count counter\nparticle_integration_logs_count{integration_id=\"%s\"} %d\n", i.ID, len(i.Logs))
 	result += fmt.Sprintf("# HELP particle integration errors information.\n# TYPE particle_integration_errors_count counter\nparticle_integration_errors_count{integration_id=\"%s\"} %d\n", i.ID, len(i.Errors))

@@ -6,12 +6,18 @@ import (
 	"log"
 	"net/http"
 	"sync"
+
+	"github.com/DazWilkin/particle-exporter/particle"
+	"github.com/DazWilkin/particle-exporter/prometheus"
 )
 
 var (
 	endpoint = flag.String("endpoint", ":9999", "Endpoint for the Particle Exporter")
 	path     = flag.String("path", "metrics", "Path on which Exporter should serve metrics")
 	token    = flag.String("token", "", "Particle Access Token")
+)
+var (
+	client particle.Client
 )
 var (
 	metrics chan Metric
@@ -33,7 +39,7 @@ func metricsHandler(w http.ResponseWriter, r *http.Request) {
 			wgPut.Done()
 		}()
 		log.Println("[handler] Getting Devices")
-		devices, err := newDevices(*token)
+		devices, err := client.GetDevices()
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -45,7 +51,7 @@ func metricsHandler(w http.ResponseWriter, r *http.Request) {
 
 			// Diagnostics
 			log.Println("[handler] Getting Device Diagnostics")
-			response, err := newDiagnostics(*token, device.ID)
+			response, err := client.GetDiagnostics(device.ID)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -66,7 +72,7 @@ func metricsHandler(w http.ResponseWriter, r *http.Request) {
 			wgPut.Done()
 		}()
 		log.Println("[handler] Getting Integrations")
-		integrations, err := newIntegrations(*token)
+		integrations, err := client.GetIntegrations()
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -74,7 +80,7 @@ func metricsHandler(w http.ResponseWriter, r *http.Request) {
 		for _, integration := range integrations {
 			// Integration
 			log.Printf("[handler] Getting Integration: %s", integration.ID)
-			detailed, err := newIntegration(*token, integration.ID)
+			detailed, err := client.GetIntegration(integration.ID)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -94,7 +100,7 @@ func metricsHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("[handler] Enumerating Metrics")
 		for metric := range metrics {
 			log.Println("[handler] Metric")
-			fmt.Fprintf(w, metric.expose())
+			fmt.Fprintf(w, metric.Expose())
 		}
 	}()
 
@@ -117,6 +123,10 @@ func main() {
 
 	// Create Channel used to queue Metrics
 	metrics = make(chan Metric)
+
+	// Refactoring
+	client = particle.NewClient(*token)
+	_ = prometheus.NewExporter(*endpoint, *path)
 
 	// Handle request for metrics
 	log.Println("[main] Registering handler")
