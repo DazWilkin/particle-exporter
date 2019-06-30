@@ -91,6 +91,7 @@ func (c *Client) GetIntegration(id string) (Integration, error) {
 // (TODO:dazwilkin) Refactor
 type gauge struct {
 	name  string
+	group string
 	help  string
 	value time.Duration
 }
@@ -98,7 +99,7 @@ type gauge struct {
 func (g gauge) Expose() (result string) {
 	result += fmt.Sprintf("# HELP %s.\n", g.help)
 	result += fmt.Sprintf("# TYPE %s gauge\n", g.name)
-	result += fmt.Sprintf("%s %d\n", g.name, g.value/time.Millisecond)
+	result += fmt.Sprintf("%s{type=\"%s\"} %d\n", g.name, g.group, g.value/time.Millisecond)
 	return result
 }
 func (c Client) GetMetrics(metrics chan x.Metric) {
@@ -106,15 +107,16 @@ func (c Client) GetMetrics(metrics chan x.Metric) {
 
 	// Accumulate Devices|Diagnostics
 	wg.Add(1)
-	startDevices := time.Now()
 	go func() {
+		startDevices := time.Now()
 		log.Println("[handler:go] Entered: Devices|Diagnostics")
 		defer func() {
 			log.Println("[handler:go] Exited: Devices|Diagnostics")
 			// Yes, another metric: measuring the elasped time
 			metrics <- gauge{
-				name:  "exporter_produce_devices_time",
-				help:  "Exporter Milliseconds to produce Device|Diagnostics Metrics",
+				name:  "exporter_produce_time",
+				group: "devices",
+				help:  "Exporter Milliseconds to produce Metrics",
 				value: time.Since(startDevices),
 			}
 			wg.Done()
@@ -146,15 +148,16 @@ func (c Client) GetMetrics(metrics chan x.Metric) {
 
 	// Accumulate Integrations
 	wg.Add(1)
-	startIntegrations := time.Now()
 	go func() {
+		startIntegrations := time.Now()
 		log.Println("[handler:go] Entered: Integrations")
 		defer func() {
 			log.Println("[handler:go] Exited: Integrations")
 			// Yes, another metric: measuring the elasped time
 			metrics <- gauge{
-				name:  "exporter_produce_integrations_time",
-				help:  "Exporter Milliseconds to produce Integrations Metrics",
+				name:  "exporter_produce_time",
+				group: "integrations",
+				help:  "Exporter Milliseconds to produce Metrics",
 				value: time.Since(startIntegrations),
 			}
 			wg.Done()

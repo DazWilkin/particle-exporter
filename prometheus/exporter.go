@@ -51,8 +51,8 @@ func (e *Exporter) handler(w http.ResponseWriter, r *http.Request) {
 	// Otherwise writer will block
 	wgConsumer.Add(1)
 	var elapsed time.Duration
-	start := time.Now()
 	go func() {
+		start := time.Now()
 		log.Println("[handler:go] Entered: Enumerate")
 		defer func() {
 			log.Println("[handler:go] Exited: Enumerate")
