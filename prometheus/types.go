@@ -4,7 +4,10 @@ import (
 	"fmt"
 )
 
-type Metric struct {
+type Exposer interface {
+	String() string
+}
+type Base struct {
 	Name   string
 	Help   string
 	Type   string
@@ -20,13 +23,13 @@ func (ll Labels) String() (result string) {
 }
 
 type Counter struct {
-	Metric
+	Base
 	Value int64
 }
 
 func NewCounter(name, help string, ll Labels) Gauge {
 	return Gauge{
-		Metric: Metric{
+		Base: Base{
 			Name:   name,
 			Help:   help,
 			Type:   "counter",
@@ -42,13 +45,13 @@ func (c Counter) String() (result string) {
 }
 
 type Gauge struct {
-	Metric
+	Base
 	Value float64
 }
 
 func NewGauge(name, help string, ll Labels) Gauge {
 	return Gauge{
-		Metric: Metric{
+		Base: Base{
 			Name:   name,
 			Help:   help,
 			Type:   "gauge",
