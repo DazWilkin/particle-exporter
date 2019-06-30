@@ -3,6 +3,8 @@ package particle
 import (
 	"fmt"
 	"time"
+
+	"github.com/DazWilkin/particle-exporter/prometheus"
 )
 
 const (
@@ -40,4 +42,10 @@ func (d Diagnostic) Expose() (result string) {
 	result += fmt.Sprintf("# HELP device system memory total.\n# TYPE device_system_memory_total gauge\ndevice_system_memory_total{core_id=\"%s\"} %d\n", d.ID, d.Payload.Device.System.Memory.Total)
 	result += fmt.Sprintf("# HELP device uptime.\n#TYPE device_uptime gauge\ndevice_uptime{core_id=\"%s\"} %d\n", d.ID, d.Payload.Device.System.Uptime)
 	return result
+}
+func (d Diagnostic) Export() prometheus.Gauge {
+	ll := map[string]string{
+		"device": d.ID,
+	}
+	return prometheus.NewGauge("device_system_memory_used", "Particle device system memory used", ll)
 }

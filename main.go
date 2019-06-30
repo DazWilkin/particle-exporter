@@ -9,6 +9,7 @@ import (
 
 	"github.com/DazWilkin/particle-exporter/particle"
 	"github.com/DazWilkin/particle-exporter/prometheus"
+	"github.com/DazWilkin/particle-exporter/x"
 )
 
 var (
@@ -20,7 +21,7 @@ var (
 	client particle.Client
 )
 var (
-	metrics chan Metric
+	metrics chan x.Metric
 )
 
 func metricsHandler(w http.ResponseWriter, r *http.Request) {
@@ -122,7 +123,7 @@ func main() {
 	}
 
 	// Create Channel used to queue Metrics
-	metrics = make(chan Metric)
+	metrics = make(chan x.Metric)
 
 	// Refactoring
 	client = particle.NewClient(*token)

@@ -3,6 +3,8 @@ package particle
 import (
 	"fmt"
 	"time"
+
+	"github.com/DazWilkin/particle-exporter/prometheus"
 )
 
 const (
@@ -42,6 +44,17 @@ type Device struct {
 type Variable map[string]string
 type Function []string
 
-func (d Device) Expose() string {
-	return fmt.Sprintf("# HELP particle device information.\n# TYPE particle_connected counter\nparticle_connected{core_id=\"%s\"} 1\n", d.ID)
+func (d Device) Expose() (result string) {
+	result += "# HELP particle device information.\n"
+	result += "# TYPE particle_connected counter\n"
+	result += fmt.Sprintf("particle_connected{core_id=\"%s\"} 1\n", d.ID)
+	return result
+}
+
+func (d Device) Export() prometheus.Gauge {
+	ll := map[string]string{
+		"device": d.ID,
+	}
+	g := prometheus.NewGauge("particle_device", "Particle device information", ll)
+	return g
 }
