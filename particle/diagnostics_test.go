@@ -3,7 +3,6 @@ package particle
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"testing"
 )
 
@@ -12,7 +11,6 @@ func TestDiagnostic(t *testing.T) {
 	if err != nil {
 		t.Errorf("Problem: %s", err)
 	}
-	log.Println(string(body))
 	dr := DiagnosticsResponse{}
 	dr.Diagnostics = []Diagnostic{}
 	err = json.Unmarshal(body, &dr)

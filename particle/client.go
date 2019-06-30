@@ -6,6 +6,10 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"sync"
+	"time"
+
+	"github.com/DazWilkin/particle-exporter/x"
 )
 
 type Client struct {
@@ -46,8 +50,8 @@ func (c *Client) GetDevices() (devices Devices, err error) {
 	}
 	return devices, nil
 }
-func (c *Client) GetDiagnostics(device string) (DiagnosticsResponse, error) {
-	body, err := c.get(fmt.Sprintf("%s/%s", urlDiagnostics, device))
+func (c *Client) GetDiagnostics(id string) (DiagnosticsResponse, error) {
+	body, err := c.get(fmt.Sprintf("%s/%s", urlDiagnostics, id))
 	if err != nil {
 		return DiagnosticsResponse{}, err
 	}
@@ -64,7 +68,6 @@ func (c *Client) GetIntegrations() (Integrations, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Println(string(body))
 	ii := Integrations{}
 	json.Unmarshal(body, &ii)
 	log.Println(len(ii))
@@ -75,7 +78,6 @@ func (c *Client) GetIntegration(id string) (Integration, error) {
 	if err != nil {
 		return Integration{}, err
 	}
-	log.Println(string(body))
 
 	ir := IntegrationResponse{}
 	ir.Integration.Logs = []Log{}
@@ -84,4 +86,99 @@ func (c *Client) GetIntegration(id string) (Integration, error) {
 
 	json.Unmarshal(body, &ir)
 	return ir.Integration, nil
+}
+
+// (TODO:dazwilkin) Refactor
+type gauge struct {
+	name  string
+	help  string
+	value time.Duration
+}
+
+func (g gauge) Expose() (result string) {
+	result += fmt.Sprintf("# HELP %s.\n", g.help)
+	result += fmt.Sprintf("# TYPE %s gauge\n", g.name)
+	result += fmt.Sprintf("%s %d\n", g.name, g.value/time.Millisecond)
+	return result
+}
+func (c Client) GetMetrics(metrics chan x.Metric) {
+	var wg sync.WaitGroup
+
+	// Accumulate Devices|Diagnostics
+	wg.Add(1)
+	startDevices := time.Now()
+	go func() {
+		log.Println("[handler:go] Entered: Devices|Diagnostics")
+		defer func() {
+			log.Println("[handler:go] Exited: Devices|Diagnostics")
+			// Yes, another metric: measuring the elasped time
+			metrics <- gauge{
+				name:  "exporter_produce_devices_time",
+				help:  "Exporter Milliseconds to produce Device|Diagnostics Metrics",
+				value: time.Since(startDevices),
+			}
+			wg.Done()
+		}()
+		log.Println("[handler] Getting Devices")
+		devices, err := c.GetDevices()
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Println("[handler] Enumerating Devices")
+		for _, device := range devices {
+			// Device
+			log.Printf("[handler] Enqueuing Device: %s", device.ID)
+			metrics <- device
+
+			// Diagnostics
+			log.Println("[handler] Getting Device Diagnostics")
+			response, err := c.GetDiagnostics(device.ID)
+			if err != nil {
+				log.Fatal(err)
+			}
+			log.Println("[handler] Enumerating Diagnostics")
+			for _, diagnostic := range response.Diagnostics {
+				log.Println("[handler] Enqueuing Diagnostics")
+				metrics <- diagnostic
+			}
+		}
+	}()
+
+	// Accumulate Integrations
+	wg.Add(1)
+	startIntegrations := time.Now()
+	go func() {
+		log.Println("[handler:go] Entered: Integrations")
+		defer func() {
+			log.Println("[handler:go] Exited: Integrations")
+			// Yes, another metric: measuring the elasped time
+			metrics <- gauge{
+				name:  "exporter_produce_integrations_time",
+				help:  "Exporter Milliseconds to produce Integrations Metrics",
+				value: time.Since(startIntegrations),
+			}
+			wg.Done()
+		}()
+		log.Println("[handler] Getting Integrations")
+		integrations, err := c.GetIntegrations()
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Println("[handler] Enumerating Integrations")
+		for _, integration := range integrations {
+			// Integration
+			log.Printf("[handler] Getting Integration: %s", integration.ID)
+			detailed, err := c.GetIntegration(integration.ID)
+			if err != nil {
+				log.Fatal(err)
+			}
+			log.Println("[handler] Enqueuing Integration")
+			log.Println(detailed.ID)
+			metrics <- detailed
+		}
+	}()
+
+	wg.Wait()
+	// Done writing to channel, so close it
+	close(metrics)
 }
