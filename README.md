@@ -51,7 +51,7 @@ Either:
 docker run \
 --interactive --tty \
 --publish=9999:9999 \
-dazwilkin/particle-exporter@sha256:559a879f1976da178033a9b81460e4005e487b5a9f2e372259755ad5ffd26e23 \
+dazwilkin/particle-exporter@sha256:a1c6b370bbe7afd60cebbefcfad54922c4f767a0c566b2410745acee26993120 \
   --token=${TOKEN}
 ```
 Or:
