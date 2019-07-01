@@ -36,7 +36,7 @@ func NewExporter(endpoint, path string, producer x.Producer) Exporter {
 		Producer: producer,
 	}
 }
-func (e *Exporter) handler(w http.ResponseWriter, r *http.Request) {
+func (e *Exporter) metricHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("[handler] Entering")
 	var wgConsumer sync.WaitGroup
 
@@ -83,9 +83,13 @@ func (e *Exporter) handler(w http.ResponseWriter, r *http.Request) {
 		value: elapsed,
 	}.Expose())
 }
+func (e *Exporter) healthHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "ok")
+}
 func (e *Exporter) Run() {
 	log.Println("[exporter:run] Registering handler")
-	http.HandleFunc(fmt.Sprintf("/%s", e.Path), e.handler)
+	http.HandleFunc(fmt.Sprintf("/%s", e.Path), e.metricHandler)
+	http.HandleFunc("/healthz", e.healthHandler)
 	log.Printf("[exporter:run] Starting Server: %s", e.Endpoint)
 	log.Fatal(http.ListenAndServe(e.Endpoint, nil))
 }
