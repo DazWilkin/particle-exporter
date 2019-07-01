@@ -20,9 +20,9 @@ services:
   
   particle-exporter:
     image: dazwilkin/particle-exporter@sha256:61edf2a6e81548c5e53f3b5885fb1e5c25dd83e0251466dc1940cf68e7706399
-    build:
-      context: .
-      dockerfile: ./Dockerfile
+    # build:
+    #   context: .
+    #   dockerfile: ./Dockerfile
     command:
     - --token=${TOKEN}
     expose:
