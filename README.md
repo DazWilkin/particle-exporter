@@ -48,10 +48,11 @@ TOKEN=[[PARTICLE-TOKEN]]
 
 Either:
 ```bash
+DIGEST="sha256:61edf2a6e81548c5e53f3b5885fb1e5c25dd83e0251466dc1940cf68e7706399"
 docker run \
 --interactive --tty \
 --publish=9999:9999 \
-dazwilkin/particle-exporter@sha256:a1c6b370bbe7afd60cebbefcfad54922c4f767a0c566b2410745acee26993120 \
+dazwilkin/particle-exporter@${DIGEST} \
   --token=${TOKEN}
 ```
 Or:
@@ -71,7 +72,7 @@ go run github.com/DazWilkin/particle-exporter \
 
 ## Browse
 
-http://${ENDPOINT}/${PATH}
+```http://${ENDPOINT}/${PATH}```
 
 ```
 # Hello Freddie# HELP freddie A simple header for this exporter.
