@@ -2,12 +2,25 @@ package prometheus
 
 import (
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"sync"
 	"time"
 
 	"github.com/DazWilkin/particle-exporter/x"
+)
+
+const (
+	landingTemplate = `
+<h1>Prometheus Exporter for Particle</h1>
+<div>The Prometheus Exporter for Particle...</div>
+<ul>
+	<li><a href="/">landing</a></li>
+	<li><a href="/{{.Path}}">/{{.Path}}</a></li>
+	<li><a href="/healthz">/healthz</a></li>
+</ul>
+`
 )
 
 type Exporter struct {
@@ -36,7 +49,18 @@ func NewExporter(endpoint, path string, producer x.Producer) Exporter {
 		Producer: producer,
 	}
 }
-func (e *Exporter) metricHandler(w http.ResponseWriter, r *http.Request) {
+func (e *Exporter) landingHandler(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.New("landing").Parse(landingTemplate)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = tmpl.Execute(w, struct{
+		Path string
+	}{
+		Path: e.Path,
+	})
+}
+func (e *Exporter) metricsHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("[handler] Entering")
 
 	// Add a headline
@@ -77,19 +101,21 @@ func (e *Exporter) metricHandler(w http.ResponseWriter, r *http.Request) {
 	// Handler completes once Consumer completes
 	wg.Wait()
 	// Once Consumer completes, we can write out its elasped time
-	fmt.Fprintf(w, gauge{
-		name:  "exporter_consume_time",
-		help:  "Exporter Milliseconds to consume Metrics",
-		value: elapsed,
-	}.Expose())
+	g := NewGauge("exporter_consume_time", "Exporter Milliseconds to consume Metrics", Labels{})
+	g.Set(float64(elapsed))
+	fmt.Fprintf(w, g.String())
 }
-func (e *Exporter) healthHandler(w http.ResponseWriter, r *http.Request) {
+func (e *Exporter) healthzHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "ok")
 }
 func (e *Exporter) Run() {
-	log.Println("[exporter:run] Registering handler")
-	http.HandleFunc(fmt.Sprintf("/%s", e.Path), e.metricHandler)
-	http.HandleFunc("/healthz", e.healthHandler)
+	log.Println("[exporter:run] Registering handlers")
+	log.Println("[exporter:run] Registering landing handler: /")
+	http.HandleFunc("/", e.landingHandler)
+	log.Printf("[exporter:run] Registering metrics handler: /%s", e.Path)
+	http.HandleFunc(fmt.Sprintf("/%s", e.Path), e.metricsHandler)
+	log.Println("[exporter:run] Registering healthz handler: /healthz")
+	http.HandleFunc("/healthz", e.healthzHandler)
 	log.Printf("[exporter:run] Starting Server: %s", e.Endpoint)
 	log.Fatal(http.ListenAndServe(e.Endpoint, nil))
 }

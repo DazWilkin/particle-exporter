@@ -19,7 +19,7 @@ services:
       - "http://prometheus:9090/-/healthy"
   
   particle-exporter:
-    image: dazwilkin/particle-exporter@sha256:61edf2a6e81548c5e53f3b5885fb1e5c25dd83e0251466dc1940cf68e7706399
+    image: dazwilkin/particle-exporter@sha256:2d3b9800879ec5a46068ec1129ce4ede8f005ecc09b066d01f31f526c10d8f41
     # build:
     #   context: .
     #   dockerfile: ./Dockerfile
