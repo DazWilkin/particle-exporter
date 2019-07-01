@@ -38,7 +38,6 @@ func NewExporter(endpoint, path string, producer x.Producer) Exporter {
 }
 func (e *Exporter) metricHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("[handler] Entering")
-	var wgConsumer sync.WaitGroup
 
 	// Add a headline
 	fmt.Fprintf(w, "# Particle Exporter")
@@ -49,7 +48,8 @@ func (e *Exporter) metricHandler(w http.ResponseWriter, r *http.Request) {
 	// Consume Metrics
 	// Important: must provide reader from channel *before* writing
 	// Otherwise writer will block
-	wgConsumer.Add(1)
+	var wg sync.WaitGroup
+	wg.Add(1)
 	var elapsed time.Duration
 	go func() {
 		start := time.Now()
@@ -61,7 +61,7 @@ func (e *Exporter) metricHandler(w http.ResponseWriter, r *http.Request) {
 			// So it's time until this defer is called
 			// But executed before the handler (!) concludes
 			elapsed = time.Since(start)
-			wgConsumer.Done()
+			wg.Done()
 		}()
 		log.Println("[handler] Enumerating Metrics")
 		for metric := range metrics {
@@ -75,7 +75,7 @@ func (e *Exporter) metricHandler(w http.ResponseWriter, r *http.Request) {
 	e.Producer.GetMetrics(metrics)
 
 	// Handler completes once Consumer completes
-	wgConsumer.Wait()
+	wg.Wait()
 	// Once Consumer completes, we can write out its elasped time
 	fmt.Fprintf(w, gauge{
 		name:  "exporter_consume_time",
