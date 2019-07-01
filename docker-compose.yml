@@ -19,10 +19,18 @@ services:
       - "http://prometheus:9090/-/healthy"
   
   particle-exporter:
-    image: dazwilkin/particle-exporter@sha256:a1c6b370bbe7afd60cebbefcfad54922c4f767a0c566b2410745acee26993120
+    image: dazwilkin/particle-exporter@sha256:61edf2a6e81548c5e53f3b5885fb1e5c25dd83e0251466dc1940cf68e7706399
+    build:
+      context: .
+      dockerfile: ./Dockerfile
     command:
     - --token=${TOKEN}
     expose:
     - "9999"
     ports:
     - 9999:9999
+    healthcheck:
+      test:
+      - CMD
+      - /healthcheck
+      - "http://particle-exporter:9999/healthz"
