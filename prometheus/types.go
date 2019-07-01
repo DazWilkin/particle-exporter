@@ -62,7 +62,7 @@ func NewGauge(name, help string, ll Labels) Gauge {
 		},
 	}
 }
-func (g Gauge) Set(value float64) {
+func (g *Gauge) Set(value float64) {
 	g.Value = value
 }
 func (g Gauge) String() (result string) {
