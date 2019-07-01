@@ -37,6 +37,9 @@ func NewCounter(name, help string, ll Labels) Gauge {
 		},
 	}
 }
+func (c Counter) Set(value int64) {
+	c.Value=value
+}
 func (c Counter) String() (result string) {
 	result += fmt.Sprintf("# HELP %s.\n", c.Help)
 	result += fmt.Sprintf("# TYPE %s %s\n", c.Name, c.Type)
@@ -58,6 +61,9 @@ func NewGauge(name, help string, ll Labels) Gauge {
 			Labels: ll,
 		},
 	}
+}
+func (g Gauge) Set(value float64) {
+	g.Value=value
 }
 func (g Gauge) String() (result string) {
 	result += fmt.Sprintf("# HELP %s.\n", g.Help)
