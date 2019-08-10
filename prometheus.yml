@@ -1,9 +1,13 @@
 global:
-  scrape_interval: 5s
+  # Once per minute
+  scrape_interval: 60s
   external_labels:
     monitor: "local-monitor"
 scrape_configs:
-  - job_name: "particle-exporter"
-    honor_labels: true
-    static_configs:
-      - targets: ["particle-exporter:9999"]
+- job_name: "particle-exporter"
+  honor_labels: true
+  static_configs:
+  # If run not using Docker Compose
+  # - targets: ["localhost:9999"]
+  # If run using Docker Compose
+  - targets: ["particle-exporter:9999"]
