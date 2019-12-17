@@ -1,47 +1,46 @@
 options:
   env:
-  - GO111MODULE=on
-  - GOPROXY=https://proxy.golang.org
+    - GO111MODULE=on
+    - GOPROXY=https://proxy.golang.org
   volumes:
-  - name: go-modules
-    path: /go
+    - name: go-modules
+      path: /go
 
 substitutions:
-  _GOLANG_VERSION: "1.12"
+  _GOLANG_VERSION: "1.13"
 
 steps:
+  # Build Particle Exporter
+  - name: golang:${_GOLANG_VERSION}
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux
+    args:
+      - go
+      - build
+      - -o
+      - ./bin/particle-exporter
+      - github.com/DazWilkin/particle-exporter
 
-# Build Particle Exporter
-- name: golang:${_GOLANG_VERSION}
-  env:
-  - CGO_ENABLED=0
-  - GOOS=linux
-  args:
-  - go
-  - build
-  - -o
-  - ./bin/particle-exporter
-  - github.com/DazWilkin/particle-exporter
+  # Build Healthcheck
+  - name: golang:${_GOLANG_VERSION}
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux
+    args:
+      - go
+      - build
+      - -o
+      - ./bin/healthcheck
+      - github.com/DazWilkin/particle-exporter/healthcheck
 
-# Build Healthcheck
-- name: golang:${_GOLANG_VERSION}
-  env:
-  - CGO_ENABLED=0
-  - GOOS=linux
-  args:
-  - go
-  - build
-  - -o
-  - ./bin/healthcheck
-  - github.com/DazWilkin/particle-exporter/healthcheck
-
-# Build Server container image
-- name: "gcr.io/cloud-builders/docker"
-  args:
-  - build
-  - --file=./Dockerfile.short
-  - --tag=us.gcr.io/particle-exporter/particle-exporter:${COMMIT_SHA}
-  - .
+  # Build Server container image
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - build
+      - --file=./Dockerfile.short
+      - --tag=us.gcr.io/particle-exporter/particle-exporter:${COMMIT_SHA}
+      - .
 
 images:
-- us.gcr.io/particle-exporter/particle-exporter:${COMMIT_SHA}
+  - us.gcr.io/particle-exporter/particle-exporter:${COMMIT_SHA}
