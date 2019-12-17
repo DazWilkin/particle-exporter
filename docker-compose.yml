@@ -2,35 +2,34 @@ version: "3"
 
 # Requires expose TOKEN=[[PARTICLE-TOKEN]]
 services:
-
   prometheus:
     image: prom/prometheus
     volumes:
-    - "${PWD}/prometheus.yml:/etc/prometheus/prometheus.yml"
+      - "${PWD}/prometheus.yml:/etc/prometheus/prometheus.yml"
     expose:
-    - "9090" # Default HTTP Endpoint
+      - "9090" # Default HTTP Endpoint
     ports:
-    - 9090:9090
+      - 9090:9090
     healthcheck:
       test:
-      - CMD
-      - curl
-      - --fail
-      - "http://prometheus:9090/-/healthy"
-  
+        - CMD
+        - curl
+        - --fail
+        - "http://prometheus:9090/-/healthy"
+
   particle-exporter:
     image: dazwilkin/particle-exporter@sha256:2d3b9800879ec5a46068ec1129ce4ede8f005ecc09b066d01f31f526c10d8f41
     # build:
     #   context: .
     #   dockerfile: ./Dockerfile
     command:
-    - --token=${TOKEN}
+      - --token=${TOKEN}
     expose:
-    - "9999"
+      - "9375" # Port registered with Prometheus Wiki
     ports:
-    - 9999:9999
+      - 9375:9375
     healthcheck:
       test:
-      - CMD
-      - /healthcheck
-      - "http://particle-exporter:9999/healthz"
+        - CMD
+        - /healthcheck
+        - "http://particle-exporter:9375/healthz"

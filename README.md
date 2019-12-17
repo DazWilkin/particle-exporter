@@ -1,10 +1,16 @@
 # Golang-based Prometheus Exporter for Particle
 
-Scratching a curiosity over a glass of wine this evening... This is a Prometheus Exporter for Particle. When given your access token, it will query Particle's service, enumerate your devices and the devices' diagnostics. It will then render these using Prometheus' Metrics Exposition format on an endpoint (`http://localhost:9999/metrics` by default) that can be configured as scrape endpoint for a Prometheus server. Then, the limit is your imagination. Then you could graph the results in Grafana...
+Scratching a curiosity over a glass of wine this evening... This is a Prometheus Exporter for Particle. When given your access token, it will query Particle's service, enumerate your devices and the devices' diagnostics. It will then render these using Prometheus' Metrics Exposition format on an endpoint (`http://localhost:9375/metrics` by default) that can be configured as scrape endpoint for a Prometheus server. Then, the limit is your imagination. Then you could graph the results in Grafana...
 
 ## Caveats
 
-This is a couple of hour's work! It is very rough. It works. It only enumerates `/devices` and `/diagnostics/${DEVICE}`. It should be straightforward to continue to extend to other Particle APIs. There's much refactoring that needs to be done!
+This is a couple of hour's work! It is very rough. It works.
+
+I realized after writing it that I should have used the Prometheus Golang client library; that's one FR ()
+
+It only enumerates `/devices` and `/diagnostics/${DEVICE}`.
+
+It should be straightforward to continue to extend to other Particle APIs. There's much refactoring that needs to be done!
 
 Feedback always welcome.
 
@@ -16,7 +22,7 @@ TOKEN=[[PARTICLE-TOKEN]]
 docker-compose up
 ```
 
-**NB** This requires the prometheus.yml file to reference the exporter as `particle-exporter:9999` rather than `localhost:9999`
+**NB** This requires the prometheus.yml file to reference the exporter as `particle-exporter:9375` rather than `localhost:9375`
 
 ## Prometheus
 
@@ -26,7 +32,7 @@ scrape_configs:
   - job_name: "particle-exporter"
     honor_labels: true
     static_configs:
-      - targets: ["localhost:9999"]
+      - targets: ["localhost:9375"]
 ```
 Then:
 ```bash
@@ -41,7 +47,7 @@ prom/prometheus
 ## Particle Exporter
 
 ```bash
-ENDPOINT=:9999 # Default
+ENDPOINT=:9375 # Default
 PATH=metrics # Default
 TOKEN=[[PARTICLE-TOKEN]]
 ```
@@ -51,7 +57,7 @@ Either:
 DIGEST="sha256:61edf2a6e81548c5e53f3b5885fb1e5c25dd83e0251466dc1940cf68e7706399"
 docker run \
 --interactive --tty \
---publish=9999:9999 \
+--publish=9375:9375 \
 dazwilkin/particle-exporter@${DIGEST} \
   --token=${TOKEN}
 ```

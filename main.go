@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	endpoint = flag.String("endpoint", ":9999", "Endpoint for the Particle Exporter")
+	endpoint = flag.String("endpoint", ":9375", "Endpoint for the Particle Exporter")
 	path     = flag.String("path", "metrics", "Path on which Exporter should serve metrics")
 	token    = flag.String("token", "", "Particle Access Token")
 )

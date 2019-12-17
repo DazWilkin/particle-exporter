@@ -11,7 +11,7 @@ FROM gcr.io/distroless/base
 COPY --from=build /particle-exporter /
 COPY --from=build /healthcheck /
 
-EXPOSE 9999
+EXPOSE 9375
 
 ENTRYPOINT ["/particle-exporter"]
-CMD ["--endpoint=:9999","--path=metrics"]
+CMD ["--endpoint=:9375","--path=metrics"]

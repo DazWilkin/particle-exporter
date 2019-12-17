@@ -4,10 +4,10 @@ global:
   external_labels:
     monitor: "local-monitor"
 scrape_configs:
-- job_name: "particle-exporter"
-  honor_labels: true
-  static_configs:
-  # If run not using Docker Compose
-  # - targets: ["localhost:9999"]
-  # If run using Docker Compose
-  - targets: ["particle-exporter:9999"]
+  - job_name: "particle-exporter"
+    honor_labels: true
+    static_configs:
+      # If run not using Docker Compose
+      # - targets: ["localhost:9375"]
+      # If run using Docker Compose
+      - targets: ["particle-exporter:9375"]
